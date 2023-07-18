@@ -2,6 +2,9 @@
 
 #include <string>
 #include <vector>
+#include <mutex>
+#include <thread>
+#include <atomic>
 
 namespace odrive_can
 {
@@ -187,11 +190,21 @@ namespace odrive_can
         int axis1_can_id_;
         int socket_read_;
         int socket_write_;
-        bool is_comms_active{false}; 
-        bool is_motor_engaged{false};
-        
+        bool is_comms_active_{false}; 
+        bool is_motor_engaged_{false};
+
+        std::atomic<bool> is_comms_reading;
+        std::mutex mtx_;
+        std::thread encoder_read_thread_;
+        float axis0_encoder_pos_;
+        float axis0_encoder_vel_;
+        float axis1_encoder_pos_;
+        float axis1_encoder_vel_;
 
     private:
         int get_axis_can_id(const Axis& axis);
+        void encoder_read_task();
+        int get_node_id(int msg_id);
+        int get_command_id(int msg_id);
     };
 };
