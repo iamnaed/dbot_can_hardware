@@ -35,44 +35,66 @@ OdriveCan::OdriveCan(const std::string &can_name, int axis0_can_id, int axis1_ca
  */
 bool OdriveCan::initialize()
 {
-
-
     return true;
 }
 
 /**
- * @brief Creates a connection to the CAN bus
+ * @brief Creates a connection to the CAN bus 
  * 
- * @return true Success
- * @return false Failed
+ * @return true if successfull, false otherwise
  */
 bool OdriveCan::connect()
 {
     // Set Socket
-    socket_ = socket(PF_CAN, SOCK_RAW, CAN_RAW);
-    if(socket_ < 0)
+    socket_read_ = socket(PF_CAN, SOCK_RAW, CAN_RAW);
+    if(socket_read_ < 0)
     {
-        socket_ = 0;
+        socket_read_ = 0;
+        return false;
+    }
+
+    socket_write_ = socket(PF_CAN, SOCK_RAW, CAN_RAW);
+    if(socket_write_ < 0)
+    {
+        socket_write_ = 0;
         return false;
     }
 
     // Specify can_interface device
-    int ret;
-    struct ifreq ifr;
-    strcpy(ifr.ifr_name, can_name_.c_str());
-    ret = ioctl(socket_, SIOCGIFINDEX, &ifr);
-    if (ret < 0) {
-        socket_ = 0;
+    int ret_r;
+    struct ifreq ifr_read;
+    strcpy(ifr_read.ifr_name, can_name_.c_str());
+    ret_r = ioctl(socket_read_, SIOCGIFINDEX, &ifr_read);
+    if (ret_r < 0) {
+        socket_read_ = 0;
+        return false;
+    }
+
+    int ret_w;
+    struct ifreq ifr_write;
+    strcpy(ifr_write.ifr_name, can_name_.c_str());
+    ret_w = ioctl(socket_write_, SIOCGIFINDEX, &ifr_write);
+    if (ret_w < 0) {
+        socket_write_ = 0;
         return false;
     }
 
     // Bind the socket to interface
-    struct sockaddr_can addr;
-    addr.can_family = AF_CAN;
-    addr.can_ifindex = ifr.ifr_ifindex;
-    ret = bind(socket_, (struct sockaddr *)&addr, sizeof(addr));
-    if (ret < 0) {
-        socket_ = 0;
+    struct sockaddr_can addr_read;
+    addr_read.can_family = AF_CAN;
+    addr_read.can_ifindex = ifr_read.ifr_ifindex;
+    ret_r = bind(socket_read_, (struct sockaddr *)&addr_read, sizeof(addr_read));
+    if (ret_r < 0) {
+        socket_read_ = 0;
+        return false;
+    }
+
+    struct sockaddr_can addr_write;
+    addr_write.can_family = AF_CAN;
+    addr_write.can_ifindex = ifr_write.ifr_ifindex;
+    ret_w = bind(socket_write_, (struct sockaddr *)&addr_write, sizeof(addr_write));
+    if (ret_w < 0) {
+        socket_write_ = 0;
         return false;
     }
     
@@ -81,6 +103,7 @@ bool OdriveCan::connect()
     //rfilter[0].can_id = 0x123;
     //rfilter[0].can_mask = CAN_SFF_MASK;
     //setsockopt(s, SOL_CAN_RAW, CAN_RAW_FILTER, &rfilter, sizeof(rfilter));
+    setsockopt(socket_write_, SOL_CAN_RAW, CAN_RAW_FILTER, NULL, 0);
 
     return true;
 }
@@ -93,8 +116,9 @@ bool OdriveCan::connect()
  */
 bool OdriveCan::disconnect()
 {
-    int ret = close(socket_);
-    return ret >= 0;
+    int ret_r = close(socket_read_);
+    int ret_w = close(socket_write_);
+    return (ret_r >= 0) && ((ret_w >= 0));
 }
 
 /**

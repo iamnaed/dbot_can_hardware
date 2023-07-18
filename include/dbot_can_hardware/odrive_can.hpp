@@ -185,9 +185,11 @@ namespace odrive_can
         std::string can_name_;
         int axis0_can_id_;
         int axis1_can_id_;
-        int socket_;
+        int socket_read_;
+        int socket_write_;
         bool is_comms_active{false}; 
         bool is_motor_engaged{false};
+        
 
     private:
         int get_axis_can_id(const Axis& axis);
