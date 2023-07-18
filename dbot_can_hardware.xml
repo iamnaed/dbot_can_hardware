@@ -1,0 +1,9 @@
+<library path="dbot_can_hardware">
+  <class name="dbot_can_hardware/DbotCanHardware"
+         type="dbot_can_hardware::DbotCanHardware"
+         base_class_type="hardware_interface::SystemInterface">
+    <description>
+      The ros2_control for Dbot using a system hardware interface-type. It uses position command and position/velocity state interface.
+    </description>
+  </class>
+</library>
