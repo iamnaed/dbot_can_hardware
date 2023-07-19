@@ -72,32 +72,28 @@ namespace odrive_can
         /**
          * @brief Initializes the Odrive Can Bus using linux's built in SocketCan
          * 
-         * @return true 
-         * @return false 
+         * @return true if successfull, false otherwise
          */
         bool initialize();
 
         /**
          * @brief Connect to the CAN Bus
          * 
-         * @return true 
-         * @return false 
+         * @return true if successfull, false otherwise
          */
         bool connect();
 
         /**
          * @brief Disconnects from the CAN bus
          * 
-         * @return true 
-         * @return false 
+         * @return true if successfull, false otherwise
          */
         bool disconnect();
 
         /**
          * @brief Activate the motors in both axis
          * 
-         * @return true 
-         * @return false 
+         * @return true if successfull, false otherwise
          */
         bool engage_motor();
 
@@ -105,16 +101,14 @@ namespace odrive_can
          * @brief Activate the motor of the given axis
          * 
          * @param axis 
-         * @return true 
-         * @return false 
+         * @return true if successfull, false otherwise
          */
         bool engage_motor(const Axis& axis);
 
         /**
          * @brief Deactivate the motors in both axis
          * 
-         * @return true 
-         * @return false 
+         * @return true if successfull, false otherwise
          */
         bool disengage_motor();
 
@@ -122,8 +116,7 @@ namespace odrive_can
          * @brief Deactivate the motor of the given axis
          * 
          * @param axis 
-         * @return true 
-         * @return false 
+         * @return true if successfull, false otherwise
          */
         bool disengage_motor(const Axis& axis);
 
@@ -162,8 +155,7 @@ namespace odrive_can
          * 
          * @param axis 
          * @param value 
-         * @return true 
-         * @return false 
+         * @return true if successfull, false otherwise
          */
         bool set_position(const Axis& axis, float value);
 
@@ -172,8 +164,7 @@ namespace odrive_can
          * 
          * @param value0 
          * @param value1 
-         * @return true 
-         * @return false 
+         * @return true if successfull, false otherwise
          */
         bool set_position(float value0, float value1);
 
@@ -187,8 +178,7 @@ namespace odrive_can
         /**
          * @brief Clear errors in Odrive
          * 
-         * @return true 
-         * @return false 
+         * @return true if successfull, false otherwise
          */
         bool clear_errors();
 

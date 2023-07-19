@@ -161,7 +161,8 @@ bool OdriveCan::disconnect()
  */
 bool OdriveCan::engage_motor()
 {
-    return false;
+    is_motor_engaged_ = true;
+    return true;
 }
 
 /**
@@ -172,7 +173,8 @@ bool OdriveCan::engage_motor()
  */
 bool OdriveCan::engage_motor(const Axis& axis)
 {
-    return false;
+    is_motor_engaged_ = true;
+    return true;
 }
 
 /**
@@ -183,7 +185,7 @@ bool OdriveCan::engage_motor(const Axis& axis)
  */
 bool OdriveCan::disengage_motor()
 {
-    is_motor_engaged_ = true;
+    is_motor_engaged_ = false;
     return true;
 }
 

@@ -41,7 +41,7 @@ namespace dbot_can
          * @brief 
          * 
          */
-        void initialize();
+        bool initialize();
 
         /**
          * @brief Get the position object
@@ -85,8 +85,7 @@ namespace dbot_can
          * 
          * @param axis 
          * @param value 
-         * @return true 
-         * @return false 
+         * @return true if successfull, false otherwise
          */
         bool set_position(const Joint& axis, float value);
 
@@ -95,48 +94,42 @@ namespace dbot_can
          * 
          * @param value0 
          * @param value1 
-         * @return true 
-         * @return false 
+         * @return true if successfull, false otherwise
          */
         bool set_position(float value0, float value1);
         
         /**
          * @brief 
          * 
-         * @return true 
-         * @return false 
+         * @return true if successfull, false otherwise
          */
         bool connect();
 
         /**
          * @brief 
          * 
-         * @return true 
-         * @return false 
+         * @return true if successfull, false otherwise
          */
         bool disconnect();
 
         /**
          * @brief 
          * 
-         * @return true 
-         * @return false 
+         * @return true if successfull, false otherwise
          */
         bool engage_motor();
 
         /**
          * @brief 
          * 
-         * @return true 
-         * @return false 
+         * @return true if successfull, false otherwise
          */
         bool disengage_motor();
 
         /**
          * @brief 
          * 
-         * @return true 
-         * @return false 
+         * @return true if successfull, false otherwise
          */
         bool clear_errors();
 
