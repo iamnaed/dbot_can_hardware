@@ -14,44 +14,52 @@ namespace odrive_can
         One = 1
     };
 
-    enum class Command
+    class Command
     {
-        CANOpenNMT = 0x000,
-        HeartBeatMessage = 0x001,
-        EStop = 0x002,
-        GetMotorError = 0x003,
-        GetEncoderError = 0x004,
-        GetSensorlessError = 0x005,
-        SetAxisNodeID = 0x006,
-        SetAxisRequestedState = 0x007,
-        SetAxisStartupConfig = 0x008,
-        GetEncoderEstimates = 0x009,
-        GetEncoderCount = 0x00A,
-        SetControllerModes = 0x00B,
-        SetInputPos = 0x00C,
-        SetInputVel = 0x00D,
-        SetInputTorque = 0x00E,
-        SetLimits = 0x00F,
-        StartAnticogging = 0x010,
-        SetTrajVelLimit = 0x011,
-        SetTrajAccelLimits = 0x012,
-        SetTrajInertia = 0x013,
-        GetIQ = 0x014,
-        GetSensorlessEstimates = 0x015,
-        RebootOdrive = 0x016,
-        GetBusVoltageAndCurrent = 0x017,
-        ClearErrors = 0x018,
-        SetLinearCount = 0x019,
-        SetPositionGain = 0x01A,
-        SetVelGains = 0x01B,
-        GetADCVoltage = 0x01C,
-        GetControllerError = 0x01D,
-        CANOpenHeartbeatMessage = 0x700
+    public:
+        static const int CANOpenNMT = 0x000;
+        static const int HeartBeatMessage = 0x001;
+        static const int EStop = 0x002;
+        static const int GetMotorError = 0x003;
+        static const int GetEncoderError = 0x004;
+        static const int GetSensorlessError = 0x005;
+        static const int SetAxisNodeID = 0x006;
+        static const int SetAxisRequestedState = 0x007;
+        static const int SetAxisStartupConfig = 0x008;
+        static const int GetEncoderEstimates = 0x009;
+        static const int GetEncoderCount = 0x00A;
+        static const int SetControllerModes = 0x00B;
+        static const int SetInputPos = 0x00C;
+        static const int SetInputVel = 0x00D;
+        static const int SetInputTorque = 0x00E;
+        static const int SetLimits = 0x00F;
+        static const int StartAnticogging = 0x010;
+        static const int SetTrajVelLimit = 0x011;
+        static const int SetTrajAccelLimits = 0x012;
+        static const int SetTrajInertia = 0x013;
+        static const int GetIQ = 0x014;
+        static const int GetSensorlessEstimates = 0x015;
+        static const int RebootOdrive = 0x016;
+        static const int GetBusVoltageAndCurrent = 0x017;
+        static const int ClearErrors = 0x018;
+        static const int SetLinearCount = 0x019;
+        static const int SetPositionGain = 0x01A;
+        static const int SetVelGains = 0x01B;
+        static const int GetADCVoltage = 0x01C;
+        static const int GetControllerError = 0x01D;
+        static const int CANOpenHeartbeatMessage = 0x700;
     };
 
     class OdriveCan
     {
     public:
+        /**
+         * @brief Construct a new Odrive Can object
+         * 
+         * @param odrv 
+         */
+        OdriveCan(const OdriveCan& odrv);
+
         /**
          * @brief Construct a new Odrive Can object
          * 
@@ -203,8 +211,10 @@ namespace odrive_can
 
     private:
         int get_axis_can_id(const Axis& axis);
-        void encoder_read_task();
         int get_node_id(int msg_id);
         int get_command_id(int msg_id);
+        void can_read_task();
+        void can_handle_message(const struct can_frame& frame);
+        void encoder_estimates_task(const struct can_frame& frame);
     };
 };

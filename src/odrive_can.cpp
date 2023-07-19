@@ -23,8 +23,22 @@ using namespace odrive_can;
  * 
  * @param can_name 
  */
+OdriveCan::OdriveCan(const OdriveCan& odrv)
+{
+    can_name_ = odrv.can_name_;
+    axis0_can_id_ = odrv.axis0_can_id_;
+    axis1_can_id_ = odrv.axis1_can_id_;
+}
+
+/**
+ * @brief Construct a new Odrive Can:: Odrive Can object
+ * 
+ * @param can_name 
+ * @param axis0_can_id 
+ * @param axis1_can_id 
+ */
 OdriveCan::OdriveCan(const std::string &can_name, int axis0_can_id, int axis1_can_id) : 
-    can_name_(can_name), 
+    can_name_(can_name),
     axis0_can_id_(axis0_can_id),
     axis1_can_id_(axis1_can_id)
 {
@@ -120,7 +134,7 @@ bool OdriveCan::connect()
 
     // Start the Read Thread
     is_comms_reading.store(true);
-    encoder_read_thread_ = std::thread{encoder_read_task};
+    encoder_read_thread_ = std::thread{can_read_task};
 
     is_comms_active_ = true;
     return true;
@@ -129,8 +143,7 @@ bool OdriveCan::connect()
 /**
  * @brief Disconnects from the CAN bus
  * 
- * @return true Success
- * @return false Failed
+ * @return true if successfull, false otherwise
  */
 bool OdriveCan::disconnect()
 {
@@ -170,7 +183,8 @@ bool OdriveCan::engage_motor(const Axis& axis)
  */
 bool OdriveCan::disengage_motor()
 {
-    return false;
+    is_motor_engaged_ = true;
+    return true;
 }
 
 /**
@@ -181,7 +195,8 @@ bool OdriveCan::disengage_motor()
  */
 bool OdriveCan::disengage_motor(const Axis& axis)
 {
-    return false;
+    is_motor_engaged_ = false;
+    return true;
 }
 
 /**
@@ -192,7 +207,23 @@ bool OdriveCan::disengage_motor(const Axis& axis)
  */
 float OdriveCan::get_position(const Axis& axis)
 {
-    return 0.0f;
+    float pos;
+
+    switch (axis)
+    {
+        case Axis::Zero:
+            mtx_.lock();
+            pos = axis0_encoder_pos_;
+            mtx_.unlock();
+            break;
+        case Axis::One:
+            mtx_.lock();
+            pos = axis1_encoder_pos_;
+            mtx_.unlock();
+            break;
+    }
+    
+    return pos;
 }
 
 /**
@@ -202,7 +233,14 @@ float OdriveCan::get_position(const Axis& axis)
  */
 std::vector<float> OdriveCan::get_position()
 {
-    return std::vector<float>();
+    float enc0, enc1;
+
+    mtx_.lock();
+    enc0 = axis0_encoder_pos_;
+    enc1 = axis1_encoder_pos_;
+    mtx_.unlock();
+
+    return std::vector<float>{enc0, enc1};
 }
 
 /**
@@ -217,16 +255,16 @@ float OdriveCan::get_velocity(const Axis& axis)
 
     switch (axis)
     {
-    case Axis::Zero:
-        mtx_.lock();
-        vel = axis0_encoder_vel_;
-        mtx_.unlock();
-        break;
-    case Axis::One:
-        mtx_.lock();
-        vel = axis1_encoder_vel_;
-        mtx_.unlock();
-        break;
+        case Axis::Zero:
+            mtx_.lock();
+            vel = axis0_encoder_vel_;
+            mtx_.unlock();
+            break;
+        case Axis::One:
+            mtx_.lock();
+            vel = axis1_encoder_vel_;
+            mtx_.unlock();
+            break;
     }
     
     return vel;
@@ -239,7 +277,14 @@ float OdriveCan::get_velocity(const Axis& axis)
  */
 std::vector<float> OdriveCan::get_velocity()
 {
-    return std::vector<float>();
+    float enc0, enc1;
+
+    mtx_.lock();
+    enc0 = axis0_encoder_vel_;
+    enc1 = axis1_encoder_vel_;
+    mtx_.unlock();
+
+    return std::vector<float>{enc0, enc1};
 }
 
 /**
@@ -262,7 +307,7 @@ bool OdriveCan::set_position(const Axis& axis, float value)
     // Frame
     struct can_frame frame;
     int axis_id = get_axis_can_id(axis);
-    int command_id = static_cast<int>(Command::SetInputPos);
+    int command_id = Command::SetInputPos;
     uint8_t data[8];
     std::memcpy(data, &value, 4);    
     frame.can_id = (axis_id << 5) | (command_id);
@@ -330,16 +375,38 @@ int OdriveCan::get_axis_can_id(const Axis& axis)
 }
 
 /**
- * Write a loop where the encoder values are read and 
- * stored in the appropriate variables
-*/
-void odrive_can::OdriveCan::encoder_read_task()
+ * @brief 
+ * 
+ * @param msg_id 
+ * @return int 
+ */
+int odrive_can::OdriveCan::get_node_id(int msg_id)
+{
+    return (msg_id >> 5);
+}
+
+/**
+ * @brief 
+ * 
+ * @param msg_id 
+ * @return int 
+ */
+int odrive_can::OdriveCan::get_command_id(int msg_id)
+{
+    return (msg_id & 0x01F);
+}
+
+/**
+ * @brief  Looping function where 
+ * the incoming CAN messages are received 
+ * and processed
+ * 
+ */
+void odrive_can::OdriveCan::can_read_task()
 {
     // Set
     struct can_frame frame;
     memset(&frame, 0, sizeof(struct can_frame));
-    int axis0_id = get_axis_can_id(Axis::Zero);
-    int axis1_id = get_axis_can_id(Axis::One);
 
     while(true)
     {
@@ -348,63 +415,81 @@ void odrive_can::OdriveCan::encoder_read_task()
             break;
 
         // Read
+        // This is a blocking function, it waits for an available CAN frame in the buffer
         int nbytes = read(socket_read_, &frame, sizeof(frame));
 
         // Guard
         if(nbytes < 0)
             continue;
 
-        // Process ID's
-        int msg_id = frame.can_id;
-        int node_id = get_node_id(msg_id);
-        int command_id = get_command_id(msg_id);
-        int command_encoder_estimates = static_cast<int>(Command::GetEncoderEstimates);
-
-        // Disregard other CAN frames
-        // Only process GetEncoderEstimates CAN frames [0x009]
-        if(command_id != command_encoder_estimates)
-            continue;
-
-        // Process Data
-        // 0  1   2  3        4  5  6  7
-        // [] [] [] []   --   [] [] [] []
-        //   4 bytes     --     4 bytes
-        // encoder pos   --   encoder vel
-        float buff;
-        float buff2;
-        std::memcpy(&buff, &frame.data[0], 4);
-        std::memcpy(&buff2, &frame.data[4], 4);
-        if(axis0_id == node_id)
-        {
-            // Thread safety
-            mtx_.lock();
-            axis0_encoder_pos_ = buff;
-            axis0_encoder_vel_ = buff2;
-            mtx_.unlock();
-        }
-        else if(axis1_id == node_id)
-        {
-            // Thread safety
-            mtx_.lock();
-            axis1_encoder_pos_ = buff;
-            axis1_encoder_vel_ = buff2;
-            mtx_.unlock();
-        }
+        // Handle CAN message
+        can_handle_message(frame);
     }
 }
 
 /**
+ * @brief 
  * 
-*/
-int odrive_can::OdriveCan::get_node_id(int msg_id)
+ */
+void odrive_can::OdriveCan::can_handle_message(const struct can_frame& frame)
 {
-    return (msg_id >> 5);
+    // Process ID's
+    int msg_id = frame.can_id;
+    int axis_id = get_node_id(msg_id);
+    int command_id = get_command_id(msg_id);
+
+    // Guard
+    // Filter data
+    if((axis_id != axis0_can_id_) && (axis_id != axis1_can_id_))
+        return;
+    
+    switch (command_id)
+    {
+        case Command::HeartBeatMessage:
+            /* Do nothing for now */
+            break;
+        case Command::GetEncoderEstimates:
+            encoder_estimates_task(frame);
+            break;
+
+        default:
+            break;
+    }
 }
 
 /**
+ * @brief 
  * 
-*/
-int odrive_can::OdriveCan::get_command_id(int msg_id)
+ */
+void odrive_can::OdriveCan::encoder_estimates_task(const struct can_frame& frame)
 {
-    return (msg_id & 0x01F);
+    // ID's
+    int msg_id = frame.can_id;
+    int axis_id = get_node_id(msg_id);
+
+    // Process Data
+    // 0  1   2  3        4  5  6  7
+    // [] [] [] []   --   [] [] [] []
+    //   4 bytes     --     4 bytes
+    // encoder pos   --   encoder vel
+    float buff;
+    float buff2;
+    std::memcpy(&buff, &frame.data[0], 4);
+    std::memcpy(&buff2, &frame.data[4], 4);
+    if(axis_id == axis0_can_id_)
+    {
+        // Thread safety
+        mtx_.lock();
+        axis0_encoder_pos_ = buff;
+        axis0_encoder_vel_ = buff2;
+        mtx_.unlock();
+    }
+    else if(axis_id == axis1_can_id_)
+    {
+        // Thread safety
+        mtx_.lock();
+        axis1_encoder_pos_ = buff;
+        axis1_encoder_vel_ = buff2;
+        mtx_.unlock();
+    }
 }

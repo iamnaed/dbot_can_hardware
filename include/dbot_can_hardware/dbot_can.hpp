@@ -22,37 +22,122 @@ namespace dbot_can
     class DbotCan
     {
     public:
-        // Construct
+        /**
+         * @brief Construct a new Dbot Can object
+         * 
+         */
         DbotCan();
+
+        /**
+         * @brief Construct a new Dbot Can object
+         * 
+         * @param odrv0 
+         * @param odrv1 
+         * @param odrv2 
+         */
         DbotCan(const odrive_can::OdriveCan& odrv0, const odrive_can::OdriveCan& odrv1, const odrive_can::OdriveCan& odrv2);
 
-        // Initialization
+        /**
+         * @brief 
+         * 
+         */
         void initialize();
 
-        // Pos
+        /**
+         * @brief Get the position object
+         * 
+         * @param joint 
+         * @return float 
+         */
         float get_position(const Joint& joint);
+
+        /**
+         * @brief Get the position object
+         * 
+         * @return std::vector<float> 
+         */
         std::vector<float> get_position();
 
-        // Vel
+        /**
+         * @brief Get the velocity object
+         * 
+         * @param joint 
+         * @return float 
+         */
         float get_velocity(const Joint& joint);
+
+        /**
+         * @brief Get the velocity object
+         * 
+         * @return std::vector<float> 
+         */
         std::vector<float> get_velocity();
 
-        // Error
+        /**
+         * @brief Get the errors object
+         * 
+         * @return float 
+         */
         float get_errors();
         
-        // Command
+        /**
+         * @brief Set the position object
+         * 
+         * @param axis 
+         * @param value 
+         * @return true 
+         * @return false 
+         */
         bool set_position(const Joint& axis, float value);
+
+        /**
+         * @brief Set the position object
+         * 
+         * @param value0 
+         * @param value1 
+         * @return true 
+         * @return false 
+         */
         bool set_position(float value0, float value1);
         
-        // Communication
+        /**
+         * @brief 
+         * 
+         * @return true 
+         * @return false 
+         */
         bool connect();
+
+        /**
+         * @brief 
+         * 
+         * @return true 
+         * @return false 
+         */
         bool disconnect();
 
-        // Actuator
+        /**
+         * @brief 
+         * 
+         * @return true 
+         * @return false 
+         */
         bool engage_motor();
+
+        /**
+         * @brief 
+         * 
+         * @return true 
+         * @return false 
+         */
         bool disengage_motor();
 
-        // Cleanup
+        /**
+         * @brief 
+         * 
+         * @return true 
+         * @return false 
+         */
         bool clear_errors();
 
     private:

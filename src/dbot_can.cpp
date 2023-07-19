@@ -7,7 +7,7 @@ dbot_can::DbotCan::DbotCan() :
 {
 }
 
-dbot_can::DbotCan::DbotCan(const odrive_can::OdriveCan &odrv0, const odrive_can::OdriveCan &odrv1, const odrive_can::OdriveCan &odrv2) :
+dbot_can::DbotCan::DbotCan(const odrive_can::OdriveCan& odrv0, const odrive_can::OdriveCan& odrv1, const odrive_can::OdriveCan& odrv2) :
     odrv0_(odrv0), 
     odrv1_(odrv1), 
     odrv2_(odrv2)
