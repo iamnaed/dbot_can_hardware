@@ -75,7 +75,7 @@ bool DbotCan::initialize()
  */
 bool DbotCan::connect()
 {
-    return false;// Set Socket
+    // Set Socket
     socket_read_ = socket(PF_CAN, SOCK_RAW, CAN_RAW);
     if(socket_read_ < 0)
     {
