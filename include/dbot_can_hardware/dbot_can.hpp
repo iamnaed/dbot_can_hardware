@@ -1,22 +1,28 @@
 #pragma once
+#include "odrive_can.hpp"
 
 #include <cstring>
 #include <string>
 #include <vector>
 #include <memory>
 
-#include "odrive_can.hpp"
-
 namespace dbot_can
 {
-    enum class Joint
+    struct DbotCanConfig
     {
-        J0 = 0,
-        J1 = 1,
-        J2 = 2,
-        J3 = 3,
-        J4 = 4,
-        J5 = 5
+        std::string can_name;
+        std::array<float, 6> joint_reduction_ratios;
+        std::array<int, 6> joint_can_ids;
+    };
+
+    class Joint
+    {
+        static const int J0 = 0;
+        static const int J1 = 1;
+        static const int J2 = 2;
+        static const int J3 = 3;
+        static const int J4 = 4;
+        static const int J5 = 5;
     };
 
     class DbotCan
@@ -31,11 +37,9 @@ namespace dbot_can
         /**
          * @brief Construct a new Dbot Can object
          * 
-         * @param odrv0 
-         * @param odrv1 
-         * @param odrv2 
+         * @param config 
          */
-        DbotCan(const odrive_can::OdriveCan& odrv0, const odrive_can::OdriveCan& odrv1, const odrive_can::OdriveCan& odrv2);
+        DbotCan(const DbotCanConfig config);
 
         /**
          * @brief 
@@ -44,98 +48,152 @@ namespace dbot_can
         bool initialize();
 
         /**
-         * @brief Get the position object
-         * 
-         * @param joint 
-         * @return float 
-         */
-        float get_position(const Joint& joint);
-
-        /**
-         * @brief Get the position object
-         * 
-         * @return std::vector<float> 
-         */
-        std::vector<float> get_position();
-
-        /**
-         * @brief Get the velocity object
-         * 
-         * @param joint 
-         * @return float 
-         */
-        float get_velocity(const Joint& joint);
-
-        /**
-         * @brief Get the velocity object
-         * 
-         * @return std::vector<float> 
-         */
-        std::vector<float> get_velocity();
-
-        /**
-         * @brief Get the errors object
-         * 
-         * @return float 
-         */
-        float get_errors();
-        
-        /**
-         * @brief Set the position object
-         * 
-         * @param axis 
-         * @param value 
-         * @return true if successfull, false otherwise
-         */
-        bool set_position(const Joint& axis, float value);
-
-        /**
-         * @brief Set the position object
-         * 
-         * @param value0 
-         * @param value1 
-         * @return true if successfull, false otherwise
-         */
-        bool set_position(float value0, float value1);
-        
-        /**
          * @brief 
          * 
-         * @return true if successfull, false otherwise
+         * @return true if successful, false otherwiseケビンを待っています
          */
-        bool connect();
+         bool connect();
 
         /**
          * @brief 
          * 
-         * @return true if successfull, false otherwise
+         * @return true if successful, false otherwise
          */
         bool disconnect();
 
         /**
          * @brief 
          * 
-         * @return true if successfull, false otherwise
+         * @return true if successful, false otherwise
          */
         bool engage_motor();
 
         /**
          * @brief 
          * 
-         * @return true if successfull, false otherwise
+         * @return true if successful, false otherwise
          */
         bool disengage_motor();
 
         /**
+         * @brief Get the position object
+         * 
+         * @return std::array<float, 6>
+         */
+        std::array<float, 6> get_position();
+
+        /**
+         * @brief Get the velocity object
+         * 
+         * @return std::array<float, 6> 
+         */
+        std::array<float, 6> get_velocity();
+
+        /**
+         * @brief Set the position object
+         * 
+         * @param pos 
+         * @return true if successful, false otherwise
+         */
+        bool set_position(std::array<float, 6> pos);
+        
+        /**
+         * @brief Get the errors object
+         * 
+         * @return int 
+         */
+        int get_errors();
+
+        /**
          * @brief 
          * 
-         * @return true if successfull, false otherwise
+         * @return true if successful, false otherwise
          */
         bool clear_errors();
 
     private:
-        odrive_can::OdriveCan odrv0_;
-        odrive_can::OdriveCan odrv1_;
-        odrive_can::OdriveCan odrv2_;
+        /**
+         * @brief Internal members
+         * 
+         */
+        std::string can_name_;
+        std::array<int, 6> joint_can_ids_;
+        std::array<float, 6> joint_reduction_ratios_;
+        std::array<float, 6> joint_reduction_ratios_inverse_;
+        std::array<float, 6> encoder_positions_;
+        std::array<float, 6> encoder_velocities_;
+        std::array<float, 6> joint_angles_;
+        std::array<float, 6> joint_velocities_;
+
+        /**
+         * @brief Socket handles for CAN communication
+         * 
+         */
+        int socket_read_ {0};
+        int socket_write_ {0};
+        bool is_comms_connected_ {false};
+        bool is_motor_engaged_ {false};
+
+        /**
+         * @brief For multithreading members
+         * 
+         */
+        std::thread can_read_thread_;
+        std::atomic<bool> is_can_reading_ {false};
+        std::mutex mtx_pos_;
+        std::mutex mtx_vel_;
+        
+    private:
+        /**
+         * @brief Convert encoder values to actual joint angle rotations
+         * 
+         * @param encoder 
+         * @return std::array<float, 6> 
+         */
+        std::array<float, 6> convert_encoders_to_joints(std::array<float, 6> encoder);
+
+        /**
+         * @brief Convert actual joint angle rotations to encoder values
+         * 
+         * @param encoder 
+         * @return std::array<float, 6> 
+         */
+        std::array<float, 6> convert_joints_to_encoders(std::array<float, 6> joints);
+
+        /**
+         * @brief Get the node id object
+         * 
+         * @param msg_id 
+         * @return int 
+         */
+        int get_node_id(int msg_id);
+
+        /**
+         * @brief Get the command id object
+         * 
+         * @param msg_id 
+         * @return int 
+         */
+        int get_command_id(int msg_id);
+
+        /**
+         * @brief 
+         * 
+         */
+        void can_read_task();
+
+        /**
+         * @brief 
+         * 
+         * @param frame 
+         */
+        void can_handle_message(const struct can_frame& frame);
+
+        /**
+         * @brief 
+         * 
+         * @param frame 
+         */
+        void encoder_estimates_task(const struct can_frame& frame);
     };
 };
