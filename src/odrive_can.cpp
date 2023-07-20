@@ -133,7 +133,7 @@ bool OdriveCan::connect()
     setsockopt(socket_write_, SOL_CAN_RAW, CAN_RAW_FILTER, NULL, 0);
 
     // Start the Read Thread
-    is_comms_reading.store(true);
+    is_comms_reading_.store(true);
     encoder_read_thread_ = std::thread{can_read_task};
 
     is_comms_active_ = true;
@@ -147,8 +147,12 @@ bool OdriveCan::connect()
  */
 bool OdriveCan::disconnect()
 {
-    is_comms_reading.store(false);
+    // Set
+    is_comms_reading_.store(false);
+    is_comms_active_ = false;
     encoder_read_thread_.join();
+
+    // Close sockets
     int ret_r = close(socket_read_);
     int ret_w = close(socket_write_);
     return (ret_r >= 0) && (ret_w >= 0);
@@ -382,7 +386,7 @@ int OdriveCan::get_axis_can_id(const Axis& axis)
  * @param msg_id 
  * @return int 
  */
-int odrive_can::OdriveCan::get_node_id(int msg_id)
+int OdriveCan::get_node_id(int msg_id)
 {
     return (msg_id >> 5);
 }
@@ -393,7 +397,7 @@ int odrive_can::OdriveCan::get_node_id(int msg_id)
  * @param msg_id 
  * @return int 
  */
-int odrive_can::OdriveCan::get_command_id(int msg_id)
+int OdriveCan::get_command_id(int msg_id)
 {
     return (msg_id & 0x01F);
 }
@@ -404,7 +408,7 @@ int odrive_can::OdriveCan::get_command_id(int msg_id)
  * and processed
  * 
  */
-void odrive_can::OdriveCan::can_read_task()
+void OdriveCan::can_read_task()
 {
     // Set
     struct can_frame frame;
@@ -413,7 +417,7 @@ void odrive_can::OdriveCan::can_read_task()
     while(true)
     {
         // Break Guard
-        if(!is_comms_reading.load())
+        if(!is_comms_reading_.load())
             break;
 
         // Read

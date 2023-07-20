@@ -191,7 +191,7 @@ namespace odrive_can
         bool is_comms_active_{false}; 
         bool is_motor_engaged_{false};
 
-        std::atomic<bool> is_comms_reading;
+        std::atomic<bool> is_comms_reading_;
         std::mutex mtx_;
         std::thread encoder_read_thread_;
         float axis0_encoder_pos_;
