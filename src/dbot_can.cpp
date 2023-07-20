@@ -440,6 +440,7 @@ void DbotCan::encoder_estimates_task(const struct can_frame& frame)
     int msg_id = frame.can_id;
     int node_id = get_node_id(msg_id);
 
+    // Get index
     auto target_itr = std::find(joint_can_ids_.begin(), joint_can_ids_.end(), node_id);
     int joint_idx = std::distance(joint_can_ids_.begin(), target_itr);
     
@@ -453,14 +454,14 @@ void DbotCan::encoder_estimates_task(const struct can_frame& frame)
     std::memcpy(&buff, &frame.data[0], 4);
     std::memcpy(&buff2, &frame.data[4], 4);
 
-
-
     // Thread safety
+    // Position
     mtx_pos_.lock();
     joint_angles_[joint_idx] = buff;
     mtx_pos_.unlock();
 
+    // Velocity
     mtx_vel_.lock();
-    //axis1_encoder_vel_ = buff2;
+    joint_velocities_[joint_idx] = buff2;
     mtx_vel_.unlock();
 }
