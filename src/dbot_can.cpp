@@ -20,12 +20,12 @@ using namespace dbot_can;
 DbotCan::DbotCan()
 {
     can_name_ = "vcan0";
-    joint_can_ids_.at(0) = 0x001;
-    joint_can_ids_.at(1) = 0x002;
-    joint_can_ids_.at(2) = 0x003;
-    joint_can_ids_.at(3) = 0x004;
-    joint_can_ids_.at(4) = 0x005;
-    joint_can_ids_.at(5) = 0x006;
+    joint_can_ids_[0] = 0x001;
+    joint_can_ids_[1] = 0x002;
+    joint_can_ids_[2] = 0x003;
+    joint_can_ids_[3] = 0x004;
+    joint_can_ids_[4] = 0x005;
+    joint_can_ids_[5] = 0x006;
 
     // Calculate Inverse Reduction Ratios
     for (size_t i = 0; i < joint_reduction_ratios_.size(); i++)
