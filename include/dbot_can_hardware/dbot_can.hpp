@@ -42,55 +42,55 @@ namespace dbot_can
         DbotCan(const DbotCanConfig config);
 
         /**
-         * @brief 
+         * @brief Initializes the  Can Bus using linux's built in SocketCan
          * 
          */
         bool initialize();
 
         /**
-         * @brief 
+         * @brief Creates a connection to the CAN bus 
          * 
          * @return true if successful, false otherwiseケビンを待っています
          */
          bool connect();
 
         /**
-         * @brief 
+         * @brief Disconnects from the CAN bus
          * 
          * @return true if successful, false otherwise
          */
         bool disconnect();
 
         /**
-         * @brief 
+         * @brief Engages the motor from idle to closed loop control
          * 
          * @return true if successful, false otherwise
          */
         bool engage_motor();
 
         /**
-         * @brief 
+         * @brief Disengages the motor from closed loop control to idle
          * 
          * @return true if successful, false otherwise
          */
         bool disengage_motor();
 
         /**
-         * @brief Get the position object
+         * @brief Get the joint positions
          * 
          * @return std::array<float, 6>
          */
         std::array<float, 6> get_position();
 
         /**
-         * @brief Get the velocity object
+         * @brief Get the joint velocities
          * 
          * @return std::array<float, 6> 
          */
         std::array<float, 6> get_velocity();
 
         /**
-         * @brief Set the position object
+         * @brief Set the joint positions
          * 
          * @param pos 
          * @return true if successful, false otherwise
@@ -98,14 +98,14 @@ namespace dbot_can
         bool set_position(std::array<float, 6> pos);
         
         /**
-         * @brief Get the errors object
+         * @brief Get errors in the odrive controllers
          * 
          * @return int 
          */
         int get_errors();
 
         /**
-         * @brief 
+         * @brief Clear errors in the odrive controllers
          * 
          * @return true if successful, false otherwise
          */
@@ -177,23 +177,23 @@ namespace dbot_can
         int get_command_id(int msg_id);
 
         /**
-         * @brief 
+         * @brief CAN bus read task
          * 
          */
         void can_read_task();
 
         /**
-         * @brief 
+         * @brief Handle a CAN message frame
          * 
          * @param frame 
          */
         void can_handle_message(const struct can_frame& frame);
 
         /**
-         * @brief 
+         * @brief Handles the encoder estimates command
          * 
          * @param frame 
          */
-        void encoder_estimates_task(const struct can_frame& frame);
+        void encoder_estimates_callback(const struct can_frame& frame);
     };
 };

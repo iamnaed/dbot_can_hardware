@@ -59,7 +59,7 @@ DbotCan::DbotCan(const DbotCanConfig config)
 }
 
 /**
- * @brief 
+ * @brief Initializes the  Can Bus using linux's built in SocketCan
  * 
  * @return true if successful, false otherwise
  */
@@ -156,7 +156,7 @@ bool DbotCan::connect()
 }
 
 /**
- * @brief 
+ * @brief Disconnects from the CAN bus
  * 
  * @return true if successful, false otherwise
  */
@@ -174,7 +174,7 @@ bool DbotCan::disconnect()
 }
 
 /**
- * @brief 
+ * @brief Engages the motor from idle to closed loop control
  * 
  * @return true if successful, false otherwise
  */
@@ -185,7 +185,7 @@ bool DbotCan::engage_motor()
 }
 
 /**
- * @brief 
+ * @brief Disengages the motor from closed loop control to idle
  * 
  * @return true if successful, false otherwise
  */
@@ -196,7 +196,7 @@ bool DbotCan::disengage_motor()
 }
 
 /**
- * @brief 
+ * @brief Get the joint positions
  * 
  * @return std::array<float, 6>
  */
@@ -213,11 +213,11 @@ std::array<float, 6> DbotCan::get_position()
     j5 = joint_angles_[5];
     mtx_pos_.unlock();
 
-    return std::array<float, 6>{j0, j0, j0, j0, j0, j0};
+    return std::array<float, 6>{j0, j1, j2, j3, j4, j5};
 }
 
 /**
- * @brief 
+ * @brief Get the joint velocities
  * 
  * @return std::array<float, 6> 
  */
@@ -234,11 +234,11 @@ std::array<float, 6> DbotCan::get_velocity()
     j5 = joint_velocities_[5];
     mtx_vel_.unlock();
 
-    return std::array<float, 6>{j0, j0, j0, j0, j0, j0};
+    return std::array<float, 6>{j0, j1, j2, j3, j4, j5};
 }
 
 /**
- * @brief 
+ * @brief Set the joint positions
  * 
  * @param joints 
  * @return true if successful, false otherwise
@@ -281,7 +281,7 @@ bool DbotCan::set_position(std::array<float, 6> joints)
 }
 
 /**
- * @brief 
+ * @brief Get errors in the odrive controllers
  * 
  * @return int 
  */
@@ -291,7 +291,7 @@ int DbotCan::get_errors()
 }
 
 /**
- * @brief 
+ * @brief Clear errors in the odrive controllers
  * 
  * @return true if successful, false otherwise
  */
@@ -301,7 +301,7 @@ bool DbotCan::clear_errors()
 }
 
 /**
- * @brief 
+ * @brief Converts the encoder values to joint values
  * 
  * @param encoder 
  * @return std::array<float, 6> 
@@ -321,9 +321,9 @@ std::array<float, 6> DbotCan::convert_encoders_to_joints(std::array<float, 6> en
 }
 
 /**
- * @brief 
+ * @brief Converts the joint values to encoder values
  * 
- * @param encoder 
+ * @param joints 
  * @return std::array<float, 6> 
  */
 std::array<float, 6> DbotCan::convert_joints_to_encoders(std::array<float, 6> joints)
@@ -363,7 +363,7 @@ int DbotCan::get_command_id(int msg_id)
 }
 
 /**
- * @brief 
+ * @brief CAN bus read task
  * 
  */
 void DbotCan::can_read_task()
@@ -392,7 +392,7 @@ void DbotCan::can_read_task()
 }
 
 /**
- * @brief 
+ * @brief Handle a CAN message frame
  * 
  * @param frame 
  */
@@ -416,7 +416,7 @@ void DbotCan::can_handle_message(const struct can_frame& frame)
             /* Do nothing for now */
             break;
         case odrive_can::Command::GetEncoderEstimates:
-            encoder_estimates_task(frame);
+            encoder_estimates_callback(frame);
             break;
 
         default:
@@ -425,11 +425,11 @@ void DbotCan::can_handle_message(const struct can_frame& frame)
 }
 
 /**
- * @brief 
+ * @brief Handles the encoder estimates command
  * 
  * @param frame 
  */
-void DbotCan::encoder_estimates_task(const struct can_frame& frame)
+void DbotCan::encoder_estimates_callback(const struct can_frame& frame)
 {
     // ID's
     int msg_id = frame.can_id;
