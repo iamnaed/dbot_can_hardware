@@ -34,9 +34,7 @@ namespace dbot_can
          */
         DbotCan();
 
-        /**    // ID's
-    int msg_id = frame.can_id;
-    int node_id = get_node_id(msg_id);
+        /**
          * @brief Construct a new Dbot Can object
          * 
          * @param config 
