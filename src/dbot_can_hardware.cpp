@@ -22,20 +22,32 @@ namespace dbot_can_hardware
         config.can_name = info_.hardware_parameters["can_name"];
 
         // Hex string numbers to int
-        config.joint_can_ids[0] = std::stoi(info_.hardware_parameters["can_id_j0"],0,16);
-        config.joint_can_ids[1] = std::stoi(info_.hardware_parameters["can_id_j1"],0,16);
-        config.joint_can_ids[2] = std::stoi(info_.hardware_parameters["can_id_j2"],0,16);
-        config.joint_can_ids[3] = std::stoi(info_.hardware_parameters["can_id_j3"],0,16);
-        config.joint_can_ids[4] = std::stoi(info_.hardware_parameters["can_id_j4"],0,16);
-        config.joint_can_ids[5] = std::stoi(info_.hardware_parameters["can_id_j5"],0,16);
+        // config.joint_can_ids[0] = std::stoi(info_.hardware_parameters["can_id_j0"],0,16);
+        // config.joint_can_ids[1] = std::stoi(info_.hardware_parameters["can_id_j1"],0,16);
+        // config.joint_can_ids[2] = std::stoi(info_.hardware_parameters["can_id_j2"],0,16);
+        // config.joint_can_ids[3] = std::stoi(info_.hardware_parameters["can_id_j3"],0,16);
+        // config.joint_can_ids[4] = std::stoi(info_.hardware_parameters["can_id_j4"],0,16);
+        // config.joint_can_ids[5] = std::stoi(info_.hardware_parameters["can_id_j5"],0,16);
+        config.joint_can_ids[0] = 0x001;
+        config.joint_can_ids[1] = 0x002;
+        config.joint_can_ids[2] = 0x003;
+        config.joint_can_ids[3] = 0x004;
+        config.joint_can_ids[4] = 0x005;
+        config.joint_can_ids[5] = 0x006;
 
         // Float strings to float
-        config.joint_reduction_ratios[0] = std::stof(info_.hardware_parameters["redc_ratio_j0"]);
-        config.joint_reduction_ratios[1] = std::stof(info_.hardware_parameters["redc_ratio_j1"]);
-        config.joint_reduction_ratios[2] = std::stof(info_.hardware_parameters["redc_ratio_j2"]);
-        config.joint_reduction_ratios[3] = std::stof(info_.hardware_parameters["redc_ratio_j3"]);
-        config.joint_reduction_ratios[4] = std::stof(info_.hardware_parameters["redc_ratio_j4"]);
-        config.joint_reduction_ratios[5] = std::stof(info_.hardware_parameters["redc_ratio_j5"]);
+        // config.joint_reduction_ratios[0] = std::stof(info_.hardware_parameters["redc_ratio_j0"]);
+        // config.joint_reduction_ratios[1] = std::stof(info_.hardware_parameters["redc_ratio_j1"]);
+        // config.joint_reduction_ratios[2] = std::stof(info_.hardware_parameters["redc_ratio_j2"]);
+        // config.joint_reduction_ratios[3] = std::stof(info_.hardware_parameters["redc_ratio_j3"]);
+        // config.joint_reduction_ratios[4] = std::stof(info_.hardware_parameters["redc_ratio_j4"]);
+        // config.joint_reduction_ratios[5] = std::stof(info_.hardware_parameters["redc_ratio_j5"]);
+        config.joint_reduction_ratios[0] = 48;
+        config.joint_reduction_ratios[1] = 48;
+        config.joint_reduction_ratios[2] = 48;
+        config.joint_reduction_ratios[3] = 48;
+        config.joint_reduction_ratios[4] = 48;
+        config.joint_reduction_ratios[5] = 48;
 
         // Initialize dbot_can_
         dbot_can_.initialize(config);
