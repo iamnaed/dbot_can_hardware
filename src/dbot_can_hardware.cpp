@@ -2,7 +2,6 @@
 #include <memory>
 #include <vector>
 
-#include "dbot_can_hardware/odrive_can.hpp"
 #include "dbot_can_hardware/dbot_can_hardware.hpp"
 #include "hardware_interface/types/hardware_interface_type_values.hpp"
 #include "rclcpp/rclcpp.hpp"
@@ -17,11 +16,29 @@ namespace dbot_can_hardware
             return hardware_interface::CallbackReturn::ERROR;
         }
 
-        // Initialize storage variables
-        state_positions_.resize(info_.joints.size(), 0.0);
-        state_velocities_.resize(info_.joints.size(), 0.0);
-        state_accelerations_.resize(info_.joints.size(), 0.0);
-        cmd_positions_.resize(info_.joints.size(), 0.0);
+        // Set config 
+        // Get data from the hardware parameter
+        dbot_can::DbotCanConfig config;
+        config.can_name = info_.hardware_parameters["can_name"];
+
+        // Hex string numbers to int
+        config.joint_can_ids[0] = std::stoi(info_.hardware_parameters["can_id_j0"],0,16);
+        config.joint_can_ids[1] = std::stoi(info_.hardware_parameters["can_id_j1"],0,16);
+        config.joint_can_ids[2] = std::stoi(info_.hardware_parameters["can_id_j2"],0,16);
+        config.joint_can_ids[3] = std::stoi(info_.hardware_parameters["can_id_j3"],0,16);
+        config.joint_can_ids[4] = std::stoi(info_.hardware_parameters["can_id_j4"],0,16);
+        config.joint_can_ids[5] = std::stoi(info_.hardware_parameters["can_id_j5"],0,16);
+
+        // Float strings to float
+        config.joint_reduction_ratios[0] = std::stof(info_.hardware_parameters["redc_ratio_j0"]);
+        config.joint_reduction_ratios[1] = std::stof(info_.hardware_parameters["redc_ratio_j1"]);
+        config.joint_reduction_ratios[2] = std::stof(info_.hardware_parameters["redc_ratio_j2"]);
+        config.joint_reduction_ratios[3] = std::stof(info_.hardware_parameters["redc_ratio_j3"]);
+        config.joint_reduction_ratios[4] = std::stof(info_.hardware_parameters["redc_ratio_j4"]);
+        config.joint_reduction_ratios[5] = std::stof(info_.hardware_parameters["redc_ratio_j5"]);
+
+        // Initialize dbot_can_
+        dbot_can_.initialize(config);
 
         return hardware_interface::CallbackReturn::SUCCESS;
     }
@@ -29,9 +46,18 @@ namespace dbot_can_hardware
     // Establish communication
     hardware_interface::CallbackReturn DbotCanHardware::on_configure(const rclcpp_lifecycle::State& previous_state)
     {
+        // Error suppress
         (void)previous_state;
         RCLCPP_INFO(rclcpp::get_logger("DbotCanHardware"), "Establishing communications to motor controllers...");
-        rclcpp::sleep_for(std::chrono::milliseconds(500));
+
+        // Connect
+        bool suc = dbot_can_.connect();
+        if(!suc)
+        {
+            RCLCPP_ERROR(rclcpp::get_logger("DbotCanHardware"), "Communication failed to open for some reason. . .");
+            return hardware_interface::CallbackReturn::FAILURE;
+        }
+
         RCLCPP_INFO(rclcpp::get_logger("DbotCanHardware"), "Communication opened successfully. . .");
         return hardware_interface::CallbackReturn::SUCCESS;
     }
@@ -39,9 +65,18 @@ namespace dbot_can_hardware
     // Disconnect communications
     hardware_interface::CallbackReturn DbotCanHardware::on_cleanup(const rclcpp_lifecycle::State& previous_state)
     {
+        // Error suppress
         (void)previous_state;
         RCLCPP_INFO(rclcpp::get_logger("DbotCanHardware"), "Disconnecting communications to motor controllers...");
-        rclcpp::sleep_for(std::chrono::milliseconds(500));
+        
+        // Connect
+        bool suc = dbot_can_.disconnect();
+        if(!suc)
+        {
+            RCLCPP_ERROR(rclcpp::get_logger("DbotCanHardware"), "Disconnecting failed for some reason. . .");
+            return hardware_interface::CallbackReturn::FAILURE;
+        }
+
         RCLCPP_INFO(rclcpp::get_logger("DbotCanHardware"), "Communication disconected successfully. . .");
         return hardware_interface::CallbackReturn::SUCCESS;
     }
@@ -49,9 +84,18 @@ namespace dbot_can_hardware
     // Engage actuators
     hardware_interface::CallbackReturn DbotCanHardware::on_activate(const rclcpp_lifecycle::State& previous_state) 
     {
+        // Error suppress
         (void)previous_state;
         RCLCPP_INFO(rclcpp::get_logger("DbotCanHardware"), "Engaging motors...");
-        rclcpp::sleep_for(std::chrono::milliseconds(500));
+        
+        // Attempt to start the motors
+        bool suc = dbot_can_.engage_motor();
+        if(!suc)
+        {
+            RCLCPP_ERROR(rclcpp::get_logger("DbotCanHardware"), "Engaging motors failed for some reason. . .");
+            return hardware_interface::CallbackReturn::FAILURE;
+        }
+
         RCLCPP_INFO(rclcpp::get_logger("DbotCanHardware"), "Motors engaged successfully. . .");
         return hardware_interface::CallbackReturn::SUCCESS;
     }
@@ -59,9 +103,18 @@ namespace dbot_can_hardware
     // Disengage actuators
     hardware_interface::CallbackReturn DbotCanHardware::on_deactivate(const rclcpp_lifecycle::State& previous_state) 
     {
+        // Error suppress
         (void)previous_state;
         RCLCPP_INFO(rclcpp::get_logger("DbotCanHardware"), "Disengaging motors...");
-        rclcpp::sleep_for(std::chrono::milliseconds(500));
+        
+        // Attempt to stop the motors
+        bool suc = dbot_can_.disengage_motor();
+        if(!suc)
+        {
+            RCLCPP_ERROR(rclcpp::get_logger("DbotCanHardware"), "Disengaging motors failed for some reason. . .");
+            return hardware_interface::CallbackReturn::FAILURE;
+        }
+
         RCLCPP_INFO(rclcpp::get_logger("DbotCanHardware"), "Motors disengaged successfully. . .");
         return hardware_interface::CallbackReturn::SUCCESS;
     }
@@ -69,6 +122,7 @@ namespace dbot_can_hardware
     // Cleanup
     hardware_interface::CallbackReturn DbotCanHardware::on_shutdown(const rclcpp_lifecycle::State& previous_state) 
     {
+        // Error suppress
         (void)previous_state;
         RCLCPP_INFO(rclcpp::get_logger("DbotCanHardware"), "Shutting down.. please wait...");
         rclcpp::sleep_for(std::chrono::milliseconds(1000));
@@ -87,9 +141,6 @@ namespace dbot_can_hardware
 
             // State Velocity
             state_interfaces.emplace_back(hardware_interface::StateInterface(info_.joints[i].name, hardware_interface::HW_IF_VELOCITY, &state_velocities_[i]));
-
-            // State Acceleration
-            state_interfaces.emplace_back(hardware_interface::StateInterface(info_.joints[i].name, hardware_interface::HW_IF_ACCELERATION, &state_accelerations_[i]));
         }
         return state_interfaces;
     }
@@ -109,26 +160,23 @@ namespace dbot_can_hardware
     // Read data
     hardware_interface::return_type DbotCanHardware::read(const rclcpp::Time& time, const rclcpp::Duration& period)
     {
+        // Error suppress
+        (void)period;
         (void)time;
+
         // Positions and velocities
-        auto len = info_.joints.size();
+        std::array<float, 6> pos = dbot_can_.get_position();
+        std::array<float, 6> vel = dbot_can_.get_velocity();
+
+        // There is a hidden conversion from float to double
+        auto len = pos.size();
         for (auto i = 0u; i < len; i++)
         {
-            // Previous position
-            double prev_pos = state_positions_[i];
-            double prev_vel = state_velocities_[i];
-            double deltaSeconds = period.seconds();
-
             // Set Position
-            state_positions_[i] = cmd_positions_[i];
+            state_positions_[i] = pos[i];
 
             // Set Velocity
-            double ds = state_positions_[i] - prev_pos;
-            state_velocities_[i] = ds / deltaSeconds;
-
-            // Set Acceleration
-            double dv = state_velocities_[i] - prev_vel;
-            state_accelerations_[i] = dv / deltaSeconds;
+            state_velocities_[i] = vel[i];
         }
         return hardware_interface::return_type::OK;
     }
@@ -136,8 +184,22 @@ namespace dbot_can_hardware
     // Write data
     hardware_interface::return_type DbotCanHardware::write(const rclcpp::Time& time, const rclcpp::Duration& period)
     {
+        // Error suppress
         (void)time;
         (void)period;
+
+        // Convert first before sending
+        std::array<float, 6> pos;
+        auto len = pos.size();
+        for (auto i = 0u; i < len; i++)
+        {
+            // Conversion from double to float
+            pos[i] = cmd_positions_[i];
+        }
+
+        // Write the data
+        dbot_can_.set_position(pos);
+
         //RCLCPP_INFO(rclcpp::get_logger("DbotCanHardware"), "Sending command. . .Time: %.1fs", period.seconds());
         return hardware_interface::return_type::OK;
     }

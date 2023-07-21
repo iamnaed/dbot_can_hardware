@@ -45,9 +45,9 @@ DbotCan::DbotCan()
  * 
  * @param config 
  */
-DbotCan::DbotCan(const DbotCanConfig config)
+DbotCan::DbotCan(const DbotCanConfig& config)
 {
-    can_name_ = "vcan0";
+    can_name_ = config.can_name;
     joint_can_ids_ = config.joint_can_ids;
     joint_reduction_ratios_ = config.joint_reduction_ratios;
 
@@ -63,8 +63,17 @@ DbotCan::DbotCan(const DbotCanConfig config)
  * 
  * @return true if successful, false otherwise
  */
-bool DbotCan::initialize()
+bool DbotCan::initialize(const DbotCanConfig& config)
 {
+    can_name_ = config.can_name;
+    joint_can_ids_ = config.joint_can_ids;
+    joint_reduction_ratios_ = config.joint_reduction_ratios;
+
+    // Calculate Inverse Reduction Ratios
+    for (size_t i = 0; i < joint_reduction_ratios_.size(); i++)
+    {
+        joint_reduction_ratios_inverse_[i] = 1.0f / joint_reduction_ratios_[i];
+    }
     return true;
 }
 
@@ -205,12 +214,12 @@ std::array<float, 6> DbotCan::get_position()
     float j0, j1, j2, j3, j4, j5;
 
     mtx_pos_.lock();
-    j0 = joint_angles_[0];
-    j1 = joint_angles_[1];
-    j2 = joint_angles_[2];
-    j3 = joint_angles_[3];
-    j4 = joint_angles_[4];
-    j5 = joint_angles_[5];
+    j0 = joint_positions_[0];
+    j1 = joint_positions_[1];
+    j2 = joint_positions_[2];
+    j3 = joint_positions_[3];
+    j4 = joint_positions_[4];
+    j5 = joint_positions_[5];
     mtx_pos_.unlock();
 
     return std::array<float, 6>{j0, j1, j2, j3, j4, j5};
@@ -254,7 +263,7 @@ bool DbotCan::set_position(std::array<float, 6> joints)
         return false;
 
     // Convert values for sending
-    auto encs = convert_joints_to_encoders(joints);
+    auto encs = convert_joint_to_encoder(joints);
 
     // Frame
     for (int i = 0; i < joints.size(); i++)
@@ -306,7 +315,7 @@ bool DbotCan::clear_errors()
  * @param encoder 
  * @return std::array<float, 6> 
  */
-std::array<float, 6> DbotCan::convert_encoders_to_joints(std::array<float, 6> encoder)
+std::array<float, 6> DbotCan::convert_encoder_to_joint(std::array<float, 6> encoder)
 {
     std::array<float, 6> joints;
     for (int i = 0; i < encoder.size(); i++)
@@ -321,12 +330,24 @@ std::array<float, 6> DbotCan::convert_encoders_to_joints(std::array<float, 6> en
 }
 
 /**
+ * @brief Converts the encoder value to joint value
+ * 
+ * @param encoder 
+ * @param idx 
+ * @return float 
+ */
+float dbot_can::DbotCan::convert_encoder_to_joint(float encoder, int idx)
+{
+    return encoder * 360.0f * joint_reduction_ratios_inverse_[idx];
+}
+
+/**
  * @brief Converts the joint values to encoder values
  * 
- * @param joints 
- * @return std::array<float, 6> 
+ * @param joints
+ * @return float
  */
-std::array<float, 6> DbotCan::convert_joints_to_encoders(std::array<float, 6> joints)
+std::array<float, 6> DbotCan::convert_joint_to_encoder(std::array<float, 6> joints)
 {
     std::array<float, 6> encs;
     for (int i = 0; i < joints.size(); i++)
@@ -334,10 +355,22 @@ std::array<float, 6> DbotCan::convert_joints_to_encoders(std::array<float, 6> jo
         // Inverse of the Reduction ratio are used 
         // because multiplication is faster than division
         // Encoder [rev] = Joints [deg] * 0.00277777777 [rev / deg] * Reduction Ratio [no unit]
-        encs[i] = joints[i] * 0.00277777777f * joint_reduction_ratios_[i] ;
+        encs[i] = joints[i] * 0.00277777777f * joint_reduction_ratios_[i];
     }
     
     return encs;
+}
+
+/**
+ * @brief Converts the joint value to encoder value
+ * 
+ * @param joint 
+ * @param idx 
+ * @return float 
+ */
+float dbot_can::DbotCan::convert_joint_to_encoder(float joint, int idx)
+{
+    return joint * 0.00277777777f * joint_reduction_ratios_[idx];
 }
 
 /**
@@ -444,19 +477,21 @@ void DbotCan::encoder_estimates_callback(const struct can_frame& frame)
     // [] [] [] []   --   [] [] [] []
     //   4 bytes     --     4 bytes
     // encoder pos   --   encoder vel
-    float buff;
-    float buff2;
-    std::memcpy(&buff, &frame.data[0], 4);
-    std::memcpy(&buff2, &frame.data[4], 4);
+    float pos_buff;
+    float vel_buff;
+    std::memcpy(&pos_buff, &frame.data[0], 4);
+    std::memcpy(&vel_buff, &frame.data[4], 4);
+    float jp = convert_encoder_to_joint(pos_buff, joint_idx);
+    float jv = convert_encoder_to_joint(vel_buff, joint_idx);
 
     // Thread safety
     // Position
     mtx_pos_.lock();
-    joint_angles_[joint_idx] = buff;
+    joint_positions_[joint_idx] = jp;
     mtx_pos_.unlock();
 
     // Velocity
     mtx_vel_.lock();
-    joint_velocities_[joint_idx] = buff2;
+    joint_velocities_[joint_idx] = jv;
     mtx_vel_.unlock();
 }

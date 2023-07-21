@@ -52,15 +52,10 @@ namespace dbot_can_hardware
         dbot_can::DbotCan dbot_can_;
 
         // Store commands
-        std::vector<double> cmd_positions_;
-        std::vector<double> state_positions_;
-        std::vector<double> state_velocities_;
-        std::vector<double> state_accelerations_;
-        
-        // Storage
-        std::vector<double> state_positions_previous_;
+        std::array<double, 6> cmd_positions_;
+        std::array<double, 6> state_positions_;
+        std::array<double, 6> state_velocities_;
     };
 }
-
 
 #endif  // DBOT_CAN_HARDWARE__DBOT_CAN_HARDWARE_HPP_

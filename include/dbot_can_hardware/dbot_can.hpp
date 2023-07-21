@@ -11,8 +11,8 @@ namespace dbot_can
     struct DbotCanConfig
     {
         std::string can_name;
-        std::array<float, 6> joint_reduction_ratios;
         std::array<int, 6> joint_can_ids;
+        std::array<float, 6> joint_reduction_ratios;
     };
 
     class Joint
@@ -34,18 +34,20 @@ namespace dbot_can
          */
         DbotCan();
 
-        /**
+        /**    // ID's
+    int msg_id = frame.can_id;
+    int node_id = get_node_id(msg_id);
          * @brief Construct a new Dbot Can object
          * 
          * @param config 
          */
-        DbotCan(const DbotCanConfig config);
+        DbotCan(const DbotCanConfig& config);
 
         /**
-         * @brief Initializes the  Can Bus using linux's built in SocketCan
+         * @brief Initializes the Can Bus using linux's built in SocketCan
          * 
          */
-        bool initialize();
+        bool initialize(const DbotCanConfig& config);
 
         /**
          * @brief Creates a connection to the CAN bus 
@@ -122,7 +124,7 @@ namespace dbot_can
         std::array<float, 6> joint_reduction_ratios_inverse_;
         std::array<float, 6> encoder_positions_;
         std::array<float, 6> encoder_velocities_;
-        std::array<float, 6> joint_angles_;
+        std::array<float, 6> joint_positions_;
         std::array<float, 6> joint_velocities_;
 
         /**
@@ -145,20 +147,38 @@ namespace dbot_can
         
     private:
         /**
-         * @brief Convert encoder values to actual joint angle rotations
+         * @brief Convert encoder values to actual joint positions
          * 
          * @param encoder 
          * @return std::array<float, 6> 
          */
-        std::array<float, 6> convert_encoders_to_joints(std::array<float, 6> encoder);
+        std::array<float, 6> convert_encoder_to_joint(std::array<float, 6> encoder);
 
         /**
-         * @brief Convert actual joint angle rotations to encoder values
+         * @brief Convert encoder value to actual joint position
+         * 
+         * @param enc 
+         * @param idx 
+         * @return float 
+         */
+        float convert_encoder_to_joint(float encoder, int idx);
+
+        /**
+         * @brief Convert actual joint positions to encoder values
          * 
          * @param encoder 
          * @return std::array<float, 6> 
          */
-        std::array<float, 6> convert_joints_to_encoders(std::array<float, 6> joints);
+        std::array<float, 6> convert_joint_to_encoder(std::array<float, 6> joint);
+
+        /**
+         * @brief Convert actual joint position to encoder value
+         * 
+         * @param joint 
+         * @param idx 
+         * @return float 
+         */
+        float convert_joint_to_encoder(float joint, int idx);
 
         /**
          * @brief Get the node id object
