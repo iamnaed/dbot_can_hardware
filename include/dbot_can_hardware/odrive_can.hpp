@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ODRIVE_CAN__ODRIVE_CAN_HPP_
+#define ODRIVE_CAN__ODRIVE_CAN_HPP_
 
 #include <string>
 #include <vector>
@@ -208,3 +209,5 @@ namespace odrive_can
         void encoder_estimates_task(const struct can_frame& frame);
     };
 };
+
+#endif  // ODRIVE_CAN__ODRIVE_CAN_HPP_

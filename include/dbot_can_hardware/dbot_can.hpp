@@ -1,4 +1,6 @@
-#pragma once
+#ifndef DBOT_CAN__DBOT_CAN_HPP_
+#define DBOT_CAN__DBOT_CAN_HPP_
+
 #include "odrive_can.hpp"
 
 #include <cstring>
@@ -32,7 +34,7 @@ namespace dbot_can
          * @brief Construct a new Dbot Can object
          * 
          */
-        DbotCan();
+        //DbotCan();
 
         /**
          * @brief Construct a new Dbot Can object
@@ -215,3 +217,5 @@ namespace dbot_can
         void encoder_estimates_callback(const struct can_frame& frame);
     };
 };
+
+#endif // DBOT_CAN__DBOT_CAN_HPP_
