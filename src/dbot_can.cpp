@@ -409,6 +409,7 @@ void DbotCan::can_handle_message(const struct can_frame& frame)
     if(!is_joint_can_id)
         return;
 
+    // Node Id is inside the container
     switch (command_id)
     {
         case odrive_can::Command::HeartBeatMessage:
