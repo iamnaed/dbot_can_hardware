@@ -313,9 +313,6 @@ std::array<float, 6> DbotCan::convert_encoders_to_joints(std::array<float, 6> en
     {
         // Inverse of the Reduction ratio are used
         // because multiplication is faster than division
-        //
-        // Joints [deg] = Encoder [rev] * 360 [deg / rev] / Reduction Ratio [no unit]
-        // or
         // Joints [deg] = Encoder [rev] * 360 [deg / rev] * Inverse Reduction Ratio [no unit] 
         joints[i] = encoder[i] * 360.0f * joint_reduction_ratios_inverse_[i];
     }
@@ -336,9 +333,6 @@ std::array<float, 6> DbotCan::convert_joints_to_encoders(std::array<float, 6> jo
     {
         // Inverse of the Reduction ratio are used 
         // because multiplication is faster than division
-        //
-        // Encoder [rev] = Joints [deg] * 0.00277777777 [rev / deg] * Reduction Ratio [no unit]
-        // or
         // Encoder [rev] = Joints [deg] * 0.00277777777 [rev / deg] * Reduction Ratio [no unit]
         encs[i] = joints[i] * 0.00277777777f * joint_reduction_ratios_[i] ;
     }
