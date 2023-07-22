@@ -5,6 +5,7 @@
 #include "dbot_can_hardware/dbot_can_hardware.hpp"
 #include "hardware_interface/types/hardware_interface_type_values.hpp"
 #include "rclcpp/rclcpp.hpp"
+// #include "dbot_can_hardware/dbot_can.hpp"
 
 namespace dbot_can_hardware
 {
@@ -16,26 +17,26 @@ namespace dbot_can_hardware
             return hardware_interface::CallbackReturn::ERROR;
         }
 
-        RCLCPP_INFO(rclcpp::get_logger("DbotCanHardware"), "Initializing DbotCan...");
-
+        // Initialize storage variables
+        RCLCPP_INFO(rclcpp::get_logger("DbotCanHardware"), "Initializing State/Command interfaces...");
+        state_positions_ = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+        state_velocities_= {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+        cmd_positions_= {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+        RCLCPP_INFO(rclcpp::get_logger("DbotCanHardware"), "Initializing State/Command interfaces...");
+        
         // Set config 
         // Get data from the hardware parameter
-        dbot_can::DbotCanConfig config;
+        RCLCPP_INFO(rclcpp::get_logger("DbotCanHardware"), "Initializing DbotConfig...");
+        DbotCanConfig config;
         config.can_name = info_.hardware_parameters["can_name"];
 
         // Hex string numbers to int
-        config.joint_can_ids[0] = std::stoi(info_.hardware_parameters["can_id_j0"],0,16);
-        config.joint_can_ids[1] = std::stoi(info_.hardware_parameters["can_id_j1"],0,16);
-        config.joint_can_ids[2] = std::stoi(info_.hardware_parameters["can_id_j2"],0,16);
-        config.joint_can_ids[3] = std::stoi(info_.hardware_parameters["can_id_j3"],0,16);
-        config.joint_can_ids[4] = std::stoi(info_.hardware_parameters["can_id_j4"],0,16);
-        config.joint_can_ids[5] = std::stoi(info_.hardware_parameters["can_id_j5"],0,16);
-        config.joint_can_ids[0] = 0x001;
-        config.joint_can_ids[1] = 0x002;
-        config.joint_can_ids[2] = 0x003;
-        config.joint_can_ids[3] = 0x004;
-        config.joint_can_ids[4] = 0x005;
-        config.joint_can_ids[5] = 0x006;
+        config.joint_can_ids[0] = std::stoi(info_.hardware_parameters["can_id_j0"], 0, 16);
+        config.joint_can_ids[1] = std::stoi(info_.hardware_parameters["can_id_j1"], 0, 16);
+        config.joint_can_ids[2] = std::stoi(info_.hardware_parameters["can_id_j2"], 0, 16);
+        config.joint_can_ids[3] = std::stoi(info_.hardware_parameters["can_id_j3"], 0, 16);
+        config.joint_can_ids[4] = std::stoi(info_.hardware_parameters["can_id_j4"], 0, 16);
+        config.joint_can_ids[5] = std::stoi(info_.hardware_parameters["can_id_j5"], 0, 16);
 
         // Float strings to float
         config.joint_reduction_ratios[0] = std::stof(info_.hardware_parameters["redc_ratio_j0"]);
@@ -44,15 +45,12 @@ namespace dbot_can_hardware
         config.joint_reduction_ratios[3] = std::stof(info_.hardware_parameters["redc_ratio_j3"]);
         config.joint_reduction_ratios[4] = std::stof(info_.hardware_parameters["redc_ratio_j4"]);
         config.joint_reduction_ratios[5] = std::stof(info_.hardware_parameters["redc_ratio_j5"]);
-        config.joint_reduction_ratios[0] = 48;
-        config.joint_reduction_ratios[1] = 48;
-        config.joint_reduction_ratios[2] = 48;
-        config.joint_reduction_ratios[3] = 48;
-        config.joint_reduction_ratios[4] = 48;
-        config.joint_reduction_ratios[5] = 48;
-
+        RCLCPP_INFO(rclcpp::get_logger("DbotCanHardware"), "Initializing DbotConfig done...");
+        
         // Initialize dbot_can_
+        RCLCPP_INFO(rclcpp::get_logger("DbotCanHardware"), "Initializing DbotCan initializing...");
         dbot_can_.initialize(config);
+        RCLCPP_INFO(rclcpp::get_logger("DbotCanHardware"), "Initializing DbotCan done...");
 
         RCLCPP_INFO(rclcpp::get_logger("DbotCanHardware"), "DbotCan initialization complete...");
         return hardware_interface::CallbackReturn::SUCCESS;
@@ -103,7 +101,7 @@ namespace dbot_can_hardware
         (void)previous_state;
         RCLCPP_INFO(rclcpp::get_logger("DbotCanHardware"), "Engaging motors...");
         
-        // // Attempt to start the motors
+        // Attempt to start the motors
         // bool suc = dbot_can_.engage_motor();
         // if(!suc)
         // {
@@ -122,7 +120,7 @@ namespace dbot_can_hardware
         (void)previous_state;
         RCLCPP_INFO(rclcpp::get_logger("DbotCanHardware"), "Disengaging motors...");
         
-        // // Attempt to stop the motors
+        // Attempt to stop the motors
         // bool suc = dbot_can_.disengage_motor();
         // if(!suc)
         // {
@@ -194,22 +192,6 @@ namespace dbot_can_hardware
         //     state_velocities_[i] = vel[i];
         // }
 
-        // Positions and velocities
-        auto len = info_.joints.size();
-        for (auto i = 0u; i < len; i++)
-        {
-            // Previous position
-            double prev_pos = state_positions_[i];
-            double prev_vel = state_velocities_[i];
-            double deltaSeconds = period.seconds();
-
-            // Set Position
-            state_positions_[i] = cmd_positions_[i];
-
-            // Set Velocity
-            double ds = state_positions_[i] - prev_pos;
-            state_velocities_[i] = ds / deltaSeconds;
-        }
         return hardware_interface::return_type::OK;
     }
 

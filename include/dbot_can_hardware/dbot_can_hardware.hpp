@@ -6,8 +6,8 @@
 #include "hardware_interface/system_interface.hpp"
 #include "rclcpp/macros.hpp"
 #include "rclcpp_lifecycle/state.hpp"
-#include "visibility_control.h"
-#include "dbot_can.hpp"
+#include "dbot_can_hardware/visibility_control.h"
+#include "dbot_can_hardware/dbot_can.hpp"
 
 namespace dbot_can_hardware
 {
@@ -54,9 +54,10 @@ namespace dbot_can_hardware
         std::array<double, 6> state_velocities_;
 
         // Parameters for Dbot Can Hardware
-        //dbot_can::DbotCan dbot_can_;
+        DbotCan dbot_can_;
         //dbot_can::DbotCanConfig config_;
-        dbot_can::Joint j_;
+        //dbot_can::Joint j_;
+        //CanTest ct_;
     };
 }
 
