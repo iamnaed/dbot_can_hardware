@@ -450,8 +450,8 @@ private:
         while(true)
         {
             // Break Guard
-            // if(!is_can_reading_.load())
-            //     break;
+            if(!is_can_reading_.load())
+                break;
 
             // Read
             // This is a blocking function, it waits for an available CAN frame in the buffer
