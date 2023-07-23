@@ -64,12 +64,12 @@ namespace dbot_can_hardware
         RCLCPP_INFO(rclcpp::get_logger("DbotCanHardware"), "Establishing communications to motor controllers...");
 
         // // Connect
-        // bool suc = dbot_can_.connect();
-        // if(!suc)
-        // {
-        //     RCLCPP_ERROR(rclcpp::get_logger("DbotCanHardware"), "Communication failed to open for some reason. . .");
-        //     return hardware_interface::CallbackReturn::FAILURE;
-        // }
+        bool suc = dbot_can_.connect();
+        if(!suc)
+        {
+            RCLCPP_ERROR(rclcpp::get_logger("DbotCanHardware"), "Communication failed to open for some reason. . .");
+            return hardware_interface::CallbackReturn::FAILURE;
+        }
 
         RCLCPP_INFO(rclcpp::get_logger("DbotCanHardware"), "Communication opened successfully. . .");
         return hardware_interface::CallbackReturn::SUCCESS;
@@ -83,12 +83,12 @@ namespace dbot_can_hardware
         RCLCPP_INFO(rclcpp::get_logger("DbotCanHardware"), "Disconnecting communications to motor controllers...");
         
         // // Connect
-        // bool suc = dbot_can_.disconnect();
-        // if(!suc)
-        // {
-        //     RCLCPP_ERROR(rclcpp::get_logger("DbotCanHardware"), "Disconnecting failed for some reason. . .");
-        //     return hardware_interface::CallbackReturn::FAILURE;
-        // }
+        bool suc = dbot_can_.disconnect();
+        if(!suc)
+        {
+            RCLCPP_ERROR(rclcpp::get_logger("DbotCanHardware"), "Disconnecting failed for some reason. . .");
+            return hardware_interface::CallbackReturn::FAILURE;
+        }
 
         RCLCPP_INFO(rclcpp::get_logger("DbotCanHardware"), "Communication disconected successfully. . .");
         return hardware_interface::CallbackReturn::SUCCESS;
@@ -102,12 +102,12 @@ namespace dbot_can_hardware
         RCLCPP_INFO(rclcpp::get_logger("DbotCanHardware"), "Engaging motors...");
         
         // Attempt to start the motors
-        // bool suc = dbot_can_.engage_motor();
-        // if(!suc)
-        // {
-        //     RCLCPP_ERROR(rclcpp::get_logger("DbotCanHardware"), "Engaging motors failed for some reason. . .");
-        //     return hardware_interface::CallbackReturn::FAILURE;
-        // }
+        bool suc = dbot_can_.engage_motor();
+        if(!suc)
+        {
+            RCLCPP_ERROR(rclcpp::get_logger("DbotCanHardware"), "Engaging motors failed for some reason. . .");
+            return hardware_interface::CallbackReturn::FAILURE;
+        }
 
         RCLCPP_INFO(rclcpp::get_logger("DbotCanHardware"), "Motors engaged successfully. . .");
         return hardware_interface::CallbackReturn::SUCCESS;
@@ -120,13 +120,13 @@ namespace dbot_can_hardware
         (void)previous_state;
         RCLCPP_INFO(rclcpp::get_logger("DbotCanHardware"), "Disengaging motors...");
         
-        // Attempt to stop the motors
-        // bool suc = dbot_can_.disengage_motor();
-        // if(!suc)
-        // {
-        //     RCLCPP_ERROR(rclcpp::get_logger("DbotCanHardware"), "Disengaging motors failed for some reason. . .");
-        //     return hardware_interface::CallbackReturn::FAILURE;
-        // }
+        //Attempt to stop the motors
+        bool suc = dbot_can_.disengage_motor();
+        if(!suc)
+        {
+            RCLCPP_ERROR(rclcpp::get_logger("DbotCanHardware"), "Disengaging motors failed for some reason. . .");
+            return hardware_interface::CallbackReturn::FAILURE;
+        }
 
         RCLCPP_INFO(rclcpp::get_logger("DbotCanHardware"), "Motors disengaged successfully. . .");
         return hardware_interface::CallbackReturn::SUCCESS;
@@ -177,20 +177,20 @@ namespace dbot_can_hardware
         (void)period;
         (void)time;
 
-        // // Positions and velocities
-        // std::array<float, 6> pos = dbot_can_.get_position();
-        // std::array<float, 6> vel = dbot_can_.get_velocity();
+        // Positions and velocities
+        std::array<float, 6> pos = dbot_can_.get_position();
+        std::array<float, 6> vel = dbot_can_.get_velocity();
 
-        // // There is a hidden conversion from float to double
-        // auto len = pos.size();
-        // for (auto i = 0u; i < len; i++)
-        // {
-        //     // Set Position
-        //     state_positions_[i] = pos[i];
+        // There is a hidden conversion from float to double
+        auto len = pos.size();
+        for (auto i = 0u; i < len; i++)
+        {
+            // Set Position
+            state_positions_[i] = pos[i];
 
-        //     // Set Velocity
-        //     state_velocities_[i] = vel[i];
-        // }
+            // Set Velocity
+            state_velocities_[i] = vel[i];
+        }
 
         return hardware_interface::return_type::OK;
     }
@@ -202,17 +202,17 @@ namespace dbot_can_hardware
         (void)time;
         (void)period;
 
-        // // Convert first before sending
-        // std::array<float, 6> pos;
-        // auto len = pos.size();
-        // for (auto i = 0u; i < len; i++)
-        // {
-        //     // Conversion from double to float
-        //     pos[i] = cmd_positions_[i];
-        // }
+        // Convert first before sending
+        std::array<float, 6> pos;
+        auto len = pos.size();
+        for (auto i = 0u; i < len; i++)
+        {
+            // Conversion from double to float
+            pos[i] = cmd_positions_[i];
+        }
 
-        // // Write the data
-        // dbot_can_.set_position(pos);
+        // Write the data
+        dbot_can_.set_position(pos);
 
         //RCLCPP_INFO(rclcpp::get_logger("DbotCanHardware"), "Sending command. . .Time: %.1fs", period.seconds());
         return hardware_interface::return_type::OK;
