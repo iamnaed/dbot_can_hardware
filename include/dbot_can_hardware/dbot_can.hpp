@@ -317,38 +317,6 @@ public:
     {
         return true;
     }
-
-private:
-    /**
-     * @brief Internal members
-     * 
-     */
-    std::string can_name_;
-    std::array<int, 6> joint_can_ids_;
-    std::array<float, 6> joint_reduction_ratios_;
-    std::array<float, 6> joint_reduction_ratios_inverse_;
-    std::array<float, 6> encoder_positions_;
-    std::array<float, 6> encoder_velocities_;
-    std::array<float, 6> joint_positions_;
-    std::array<float, 6> joint_velocities_;
-
-    /**
-     * @brief Socket handles for CAN communication
-     * 
-     */
-    int socket_read_;
-    int socket_write_;
-    bool is_comms_connected_;
-    bool is_motor_engaged_;
-
-    /**
-     * @brief For multithreading members
-     * 
-     */
-    std::thread can_read_thread_;
-    std::atomic<bool> is_can_reading_;
-    std::mutex mtx_pos_;
-    std::mutex mtx_vel_;
     
 private:
     /**
@@ -537,6 +505,38 @@ private:
         joint_velocities_[joint_idx] = jv;
         mtx_vel_.unlock();
     }
+
+private:
+    /**
+     * @brief Internal members
+     * 
+     */
+    std::string can_name_;
+    std::array<int, 6> joint_can_ids_;
+    std::array<float, 6> joint_reduction_ratios_;
+    std::array<float, 6> joint_reduction_ratios_inverse_;
+    std::array<float, 6> encoder_positions_;
+    std::array<float, 6> encoder_velocities_;
+    std::array<float, 6> joint_positions_;
+    std::array<float, 6> joint_velocities_;
+
+    /**
+     * @brief Socket handles for CAN communication
+     * 
+     */
+    int socket_read_;
+    int socket_write_;
+    bool is_comms_connected_;
+    bool is_motor_engaged_;
+
+    /**
+     * @brief For multithreading members
+     * 
+     */
+    std::thread can_read_thread_;
+    std::atomic<bool> is_can_reading_;
+    std::mutex mtx_pos_;
+    std::mutex mtx_vel_;
 };
 
 #endif // DBOT_CAN__DBOT_CAN_HPP_
