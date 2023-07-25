@@ -22,37 +22,35 @@ namespace dbot_can_hardware
         state_positions_ = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
         state_velocities_= {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
         cmd_positions_= {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-        RCLCPP_INFO(rclcpp::get_logger("DbotCanHardware"), "Initializing State/Command interfaces...");
         
         // Set config 
         // Get data from the hardware parameter
+        // found in dbot/urdf/dbot_can_hardware_ros2_control.xacro
         RCLCPP_INFO(rclcpp::get_logger("DbotCanHardware"), "Initializing DbotConfig...");
         DbotCanConfig config;
         config.can_name = info_.hardware_parameters["can_name"];
 
-        // Hex string numbers to int
-        config.joint_can_ids[0] = std::stoi(info_.hardware_parameters["can_id_j0"], 0, 16);
-        config.joint_can_ids[1] = std::stoi(info_.hardware_parameters["can_id_j1"], 0, 16);
-        config.joint_can_ids[2] = std::stoi(info_.hardware_parameters["can_id_j2"], 0, 16);
-        config.joint_can_ids[3] = std::stoi(info_.hardware_parameters["can_id_j3"], 0, 16);
-        config.joint_can_ids[4] = std::stoi(info_.hardware_parameters["can_id_j4"], 0, 16);
-        config.joint_can_ids[5] = std::stoi(info_.hardware_parameters["can_id_j5"], 0, 16);
+        // Joint Can Ids 
+        config.joint_can_ids[0] = std::stoi(info_.hardware_parameters["can_id_j0"]);
+        config.joint_can_ids[1] = std::stoi(info_.hardware_parameters["can_id_j1"]);
+        config.joint_can_ids[2] = std::stoi(info_.hardware_parameters["can_id_j2"]);
+        config.joint_can_ids[3] = std::stoi(info_.hardware_parameters["can_id_j3"]);
+        config.joint_can_ids[4] = std::stoi(info_.hardware_parameters["can_id_j4"]);
+        config.joint_can_ids[5] = std::stoi(info_.hardware_parameters["can_id_j5"]);
 
-        // Float strings to float
+        // Reduction ratios of each joint
         config.joint_reduction_ratios[0] = std::stof(info_.hardware_parameters["redc_ratio_j0"]);
         config.joint_reduction_ratios[1] = std::stof(info_.hardware_parameters["redc_ratio_j1"]);
         config.joint_reduction_ratios[2] = std::stof(info_.hardware_parameters["redc_ratio_j2"]);
         config.joint_reduction_ratios[3] = std::stof(info_.hardware_parameters["redc_ratio_j3"]);
         config.joint_reduction_ratios[4] = std::stof(info_.hardware_parameters["redc_ratio_j4"]);
         config.joint_reduction_ratios[5] = std::stof(info_.hardware_parameters["redc_ratio_j5"]);
-        RCLCPP_INFO(rclcpp::get_logger("DbotCanHardware"), "Initializing DbotConfig done...");
         
         // Initialize dbot_can_
-        RCLCPP_INFO(rclcpp::get_logger("DbotCanHardware"), "Initializing DbotCan initializing...");
+        RCLCPP_INFO(rclcpp::get_logger("DbotCanHardware"), "Initializing DbotCan...");
         dbot_can_.initialize(config);
-        RCLCPP_INFO(rclcpp::get_logger("DbotCanHardware"), "Initializing DbotCan done...");
 
-        RCLCPP_INFO(rclcpp::get_logger("DbotCanHardware"), "DbotCan initialization complete...");
+        RCLCPP_INFO(rclcpp::get_logger("DbotCanHardware"), "DbotCan hardware initialization complete...");
         return hardware_interface::CallbackReturn::SUCCESS;
     }
 
@@ -192,6 +190,7 @@ namespace dbot_can_hardware
             state_velocities_[i] = vel[i];
         }
 
+        //RCLCPP_INFO(rclcpp::get_logger("DbotCanHardware"), "Read: %.1fms", (period.seconds() * 1000));
         return hardware_interface::return_type::OK;
     }
 
@@ -214,7 +213,7 @@ namespace dbot_can_hardware
         // Write the data
         dbot_can_.set_position(pos);
 
-        //RCLCPP_INFO(rclcpp::get_logger("DbotCanHardware"), "Sending command. . .Time: %.1fs", period.seconds());
+        //RCLCPP_INFO(rclcpp::get_logger("DbotCanHardware"), "Write: %.1fms", (period.seconds() * 1000));
         return hardware_interface::return_type::OK;
     }
 }
