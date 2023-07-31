@@ -220,18 +220,8 @@ public:
      */
     std::array<float, 6> get_position()
     {
-        float j0, j1, j2, j3, j4, j5;
-
-        mtx_pos_.lock();
-        j0 = joint_positions_[0];
-        j1 = joint_positions_[1];
-        j2 = joint_positions_[2];
-        j3 = joint_positions_[3];
-        j4 = joint_positions_[4];
-        j5 = joint_positions_[5];
-        mtx_pos_.unlock();
-
-        return std::array<float, 6>{j0, j1, j2, j3, j4, j5};
+        const std::lock_guard<std::mutex> lock(mtx_pos_);
+        return joint_positions_;
     }
 
     /**
@@ -241,18 +231,8 @@ public:
      */
     std::array<float, 6> get_velocity()
     {
-        float j0, j1, j2, j3, j4, j5;
-
-        mtx_vel_.lock();
-        j0 = joint_velocities_[0];
-        j1 = joint_velocities_[1];
-        j2 = joint_velocities_[2];
-        j3 = joint_velocities_[3];
-        j4 = joint_velocities_[4];
-        j5 = joint_velocities_[5];
-        mtx_vel_.unlock();
-
-        return std::array<float, 6>{j0, j1, j2, j3, j4, j5};
+        const std::lock_guard<std::mutex> lock(mtx_vel_);
+        return joint_velocities_;
     }
 
     /**
@@ -261,7 +241,7 @@ public:
      * @param pos 
      * @return true if successful, false otherwise
      */
-    bool set_position(std::array<float, 6> joints)
+    bool set_position(const std::array<float, 6>& joints)
     {
         // Check communications
         if(!is_comms_connected_)
@@ -357,7 +337,7 @@ private:
      * @param encoder 
      * @return std::array<float, 6> 
      */
-    std::array<float, 6> convert_joint_to_encoder(std::array<float, 6> joint)
+    std::array<float, 6> convert_joint_to_encoder(const std::array<float, 6>& joint)
     {
         std::array<float, 6> encs;
         for (size_t i = 0; i < joint.size(); i++)
@@ -448,9 +428,13 @@ private:
 
         // Guard
         // Check if 'node_id' is inside 'joint_can_ids_'
-        bool is_joint_can_id = std::find(joint_can_ids_.begin(), joint_can_ids_.end(), node_id) != joint_can_ids_.end();
+        auto target_itr = std::find(joint_can_ids_.begin(), joint_can_ids_.end(), node_id);
+        bool is_joint_can_id = target_itr != joint_can_ids_.end();
         if(!is_joint_can_id)
             return;
+
+        // Get joint index
+        int joint_idx = std::distance(joint_can_ids_.begin(), target_itr);
 
         // Node Id is inside the container
         switch (command_id)
@@ -459,7 +443,7 @@ private:
                 /* Do nothing for now */
                 break;
             case odrive_can::Command::GetEncoderEstimates:
-                encoder_estimates_callback(frame);
+                encoder_estimates_callback(frame, joint_idx);
                 break;
 
             default:
@@ -472,16 +456,8 @@ private:
      * 
      * @param frame 
      */
-    void encoder_estimates_callback(const struct can_frame& frame)
+    void encoder_estimates_callback(const struct can_frame& frame, int joint_idx)
     {
-        // ID's
-        int msg_id = frame.can_id;
-        int node_id = get_node_id(msg_id);
-
-        // Get index
-        auto target_itr = std::find(joint_can_ids_.begin(), joint_can_ids_.end(), node_id);
-        int joint_idx = std::distance(joint_can_ids_.begin(), target_itr);
-        
         // Process Data
         // 0  1   2  3        4  5  6  7
         // [] [] [] []   --   [] [] [] []
@@ -494,16 +470,36 @@ private:
         float jp = convert_encoder_to_joint(pos_buff, joint_idx);
         float jv = convert_encoder_to_joint(vel_buff, joint_idx);
 
-        // Thread safety
+        // Thread safe set functions
         // Position
-        mtx_pos_.lock();
-        joint_positions_[joint_idx] = jp;
-        mtx_pos_.unlock();
+        set_joint_position(joint_idx, jp);
 
         // Velocity
-        mtx_vel_.lock();
-        joint_velocities_[joint_idx] = jv;
-        mtx_vel_.unlock();
+        set_joint_velocity(joint_idx, jv);
+    }
+
+    /**
+     * @brief Set the joint position object
+     * 
+     * @param idx 
+     * @param value 
+     */
+    void set_joint_position(int idx, float value)
+    {
+        const std::lock_guard<std::mutex> lock(mtx_pos_);
+        joint_positions_[idx] = value;
+    }
+
+    /**
+     * @brief Set the joint velocity object
+     * 
+     * @param idx 
+     * @param value 
+     */
+    void set_joint_velocity(int idx, float value)
+    {
+        const std::lock_guard<std::mutex> lock(mtx_vel_);
+        joint_velocities_[idx] = value;
     }
 
 private:
