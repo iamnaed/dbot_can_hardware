@@ -55,9 +55,6 @@ namespace dbot_can_hardware
 
         // Parameters for Dbot Can Hardware
         DbotCan dbot_can_;
-        //dbot_can::DbotCanConfig config_;
-        //dbot_can::Joint j_;
-        //CanTest ct_;
     };
 }
 
