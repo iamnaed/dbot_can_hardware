@@ -214,18 +214,14 @@ bool OdriveCan::disengage_motor(const Axis& axis)
 float OdriveCan::get_position(const Axis& axis)
 {
     float pos;
-
+    const std::lock_guard<std::mutex> lock(mtx_);
     switch (axis)
     {
         case Axis::Zero:
-            mtx_.lock();
             pos = axis0_encoder_pos_;
-            mtx_.unlock();
             break;
         case Axis::One:
-            mtx_.lock();
             pos = axis1_encoder_pos_;
-            mtx_.unlock();
             break;
     }
     
@@ -240,12 +236,9 @@ float OdriveCan::get_position(const Axis& axis)
 std::vector<float> OdriveCan::get_position()
 {
     float enc0, enc1;
-
-    mtx_.lock();
+    const std::lock_guard<std::mutex> lock(mtx_);
     enc0 = axis0_encoder_pos_;
     enc1 = axis1_encoder_pos_;
-    mtx_.unlock();
-
     return std::vector<float>{enc0, enc1};
 }
 
@@ -258,18 +251,14 @@ std::vector<float> OdriveCan::get_position()
 float OdriveCan::get_velocity(const Axis& axis)
 {
     float vel;
-
+    const std::lock_guard<std::mutex> lock(mtx_);
     switch (axis)
     {
         case Axis::Zero:
-            mtx_.lock();
             vel = axis0_encoder_vel_;
-            mtx_.unlock();
             break;
         case Axis::One:
-            mtx_.lock();
             vel = axis1_encoder_vel_;
-            mtx_.unlock();
             break;
     }
     
@@ -284,12 +273,9 @@ float OdriveCan::get_velocity(const Axis& axis)
 std::vector<float> OdriveCan::get_velocity()
 {
     float enc0, enc1;
-
-    mtx_.lock();
+    const std::lock_guard<std::mutex> lock(mtx_);
     enc0 = axis0_encoder_vel_;
     enc1 = axis1_encoder_vel_;
-    mtx_.unlock();
-
     return std::vector<float>{enc0, enc1};
 }
 
@@ -482,20 +468,17 @@ void odrive_can::OdriveCan::encoder_estimates_task(const struct can_frame& frame
     float buff2;
     std::memcpy(&buff, &frame.data[0], 4);
     std::memcpy(&buff2, &frame.data[4], 4);
+    
+    // Thread safety
+    const std::lock_guard<std::mutex> lock(mtx_);
     if(axis_id == axis0_can_id_)
     {
-        // Thread safety
-        mtx_.lock();
         axis0_encoder_pos_ = buff;
         axis0_encoder_vel_ = buff2;
-        mtx_.unlock();
     }
     else if(axis_id == axis1_can_id_)
     {
-        // Thread safety
-        mtx_.lock();
         axis1_encoder_pos_ = buff;
         axis1_encoder_vel_ = buff2;
-        mtx_.unlock();
     }
 }
