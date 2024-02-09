@@ -389,12 +389,8 @@ private:
         struct can_frame frame;
         memset(&frame, 0, sizeof(struct can_frame));
 
-        while(true)
+        while(is_can_reading_)
         {
-            // Break Guard
-            if(!is_can_reading_)
-                break;
-
             // Read
             // This is a blocking function, it waits for an available CAN frame in the buffer
             int nbytes = read(socket_read_, &frame, sizeof(frame));
