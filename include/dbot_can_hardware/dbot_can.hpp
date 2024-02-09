@@ -161,9 +161,8 @@ public:
         setsockopt(socket_write_, SOL_CAN_RAW, CAN_RAW_FILTER, NULL, 0);
 
         // Start the Read Thread
-        is_can_reading_.store(true);
+        is_can_reading_ = true;
         can_read_thread_ = std::thread{&DbotCan::can_read_task, this};
-
         is_comms_connected_ = true;
         return true;
     }
@@ -176,7 +175,7 @@ public:
     bool disconnect()
     {
         // Disable CAN reading and stop the threads
-        is_can_reading_.store(false);
+        is_can_reading_ = false;
         is_comms_connected_ = false;
         can_read_thread_.join();
 
@@ -393,7 +392,7 @@ private:
         while(true)
         {
             // Break Guard
-            if(!is_can_reading_.load())
+            if(!is_can_reading_)
                 break;
 
             // Read
@@ -517,8 +516,8 @@ private:
      */
     int socket_read_;
     int socket_write_;
-    bool is_comms_connected_;
-    bool is_motor_engaged_;
+    std::atomic<bool> is_comms_connected_;
+    std::atomic<bool> is_motor_engaged_;
 
     /**
      * @brief For multithreading members
