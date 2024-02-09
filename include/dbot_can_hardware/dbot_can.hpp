@@ -1,8 +1,6 @@
 #ifndef DBOT_CAN__DBOT_CAN_HPP_
 #define DBOT_CAN__DBOT_CAN_HPP_
 
-#include "odrive_can.hpp"
-
 #include <cstring>
 #include <string>
 #include <memory>
@@ -21,6 +19,10 @@
 #include <linux/can/raw.h>
 #include <algorithm>
 
+/**
+ * @brief 
+ * 
+ */
 struct DbotCanConfig
 {
     std::string can_name;
@@ -28,6 +30,10 @@ struct DbotCanConfig
     std::array<float, 6> joint_reduction_ratios;
 };
 
+/**
+ * @brief 
+ * 
+ */
 class Joint
 {
     static const int J0 = 0;
@@ -38,6 +44,50 @@ class Joint
     static const int J5 = 5;
 };
 
+/**
+ * @brief Odrive Can commands taken from https://docs.odriverobotics.com/v/latest/manual/can-protocol.html
+ * 
+ */
+class Command
+{
+public:
+    static const int CANOpenNMT = 0x000;
+    static const int HeartBeatMessage = 0x001;
+    static const int EStop = 0x002;
+    static const int GetMotorError = 0x003;
+    static const int GetEncoderError = 0x004;
+    static const int GetSensorlessError = 0x005;
+    static const int SetAxisNodeID = 0x006;
+    static const int SetAxisRequestedState = 0x007;
+    static const int SetAxisStartupConfig = 0x008;
+    static const int GetEncoderEstimates = 0x009;
+    static const int GetEncoderCount = 0x00A;
+    static const int SetControllerModes = 0x00B;
+    static const int SetInputPos = 0x00C;
+    static const int SetInputVel = 0x00D;
+    static const int SetInputTorque = 0x00E;
+    static const int SetLimits = 0x00F;
+    static const int StartAnticogging = 0x010;
+    static const int SetTrajVelLimit = 0x011;
+    static const int SetTrajAccelLimits = 0x012;
+    static const int SetTrajInertia = 0x013;
+    static const int GetIQ = 0x014;
+    static const int GetSensorlessEstimates = 0x015;
+    static const int RebootOdrive = 0x016;
+    static const int GetBusVoltageAndCurrent = 0x017;
+    static const int ClearErrors = 0x018;
+    static const int SetLinearCount = 0x019;
+    static const int SetPositionGain = 0x01A;
+    static const int SetVelGains = 0x01B;
+    static const int GetADCVoltage = 0x01C;
+    static const int GetControllerError = 0x01D;
+    static const int CANOpenHeartbeatMessage = 0x700;
+};
+
+/**
+ * @brief 
+ * 
+ */
 class DbotCan
 {
 public:
@@ -257,7 +307,7 @@ public:
 
             // CAN send
             struct can_frame frame;
-            int command_id = odrive_can::Command::SetInputPos;
+            int command_id = Command::SetInputPos;
             uint8_t data[8];
             std::memcpy(data, &value, 4);    
             frame.can_id = (axis_id << 5) | (command_id);
@@ -429,10 +479,10 @@ private:
         // Node Id is inside the container
         switch (command_id)
         {
-            case odrive_can::Command::HeartBeatMessage:
+            case Command::HeartBeatMessage:
                 /* Do nothing for now */
                 break;
-            case odrive_can::Command::GetEncoderEstimates:
+            case Command::GetEncoderEstimates:
                 encoder_estimates_callback(frame, joint_idx);
                 break;
 
